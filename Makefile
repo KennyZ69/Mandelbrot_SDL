@@ -10,7 +10,7 @@ $(OUT): $(SRC)
 	gcc $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 clean:
-	rm -f $(OUT)
+	rm -f $(OUT) $(OUT).ppm
 
 run:
 	./$(OUT)
