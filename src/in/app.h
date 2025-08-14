@@ -16,7 +16,7 @@
 
 #define SCREEN_WIDTH 1200
 #define SCREEN_HEIGHT 1000
-#define MAX_ITER 1000
+#define MAX_ITER 1500
 #define ZOOM_IN 0.90
 #define ZOOM_OUT 1.0/ZOOM_IN
 #define PAN 0.10
@@ -27,8 +27,8 @@
 typedef short int i8;
 
 typedef struct {
-	double cx, cy;
-	double scale;
+	long double cx, cy;
+	long double scale;
 } Camera;
 
 #define bool i8

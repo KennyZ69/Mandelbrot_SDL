@@ -17,18 +17,18 @@ void draw_mandelbrot(Uint32 *pixels, double real_max, double real_min, double im
 	// }
 	
 
-	static double *real_axis = NULL;
-	static double *imag_axis = NULL;
+	static long double *real_axis = NULL;
+	static long double *imag_axis = NULL;
 	static int alloc_w = 0, alloc_h = 0;
 
 	if (alloc_w != SCREEN_WIDTH) {
 		free(real_axis);
-		real_axis = (double*)malloc(SCREEN_WIDTH*sizeof(double));
+		real_axis = (long double*)malloc(SCREEN_WIDTH*sizeof(long double));
 		alloc_w = SCREEN_WIDTH;
 	}
 	if (alloc_h != SCREEN_HEIGHT) {
 		free(imag_axis);
-		imag_axis = (double*)malloc(SCREEN_HEIGHT*sizeof(double));
+		imag_axis = (long double*)malloc(SCREEN_HEIGHT*sizeof(long double));
 		alloc_h = SCREEN_HEIGHT;
 	}
 
@@ -42,10 +42,10 @@ void draw_mandelbrot(Uint32 *pixels, double real_max, double real_min, double im
 	// parallize rows if compiled with -fopenmp
 	#pragma omp parallel for schedule(dynamic, 4)
 	for (int y = 0; y < SCREEN_HEIGHT; y++) {
-		double cy = imag_axis[y];
+		long double cy = imag_axis[y];
 		Uint32 *row = pixels + (size_t)y * SCREEN_WIDTH;
 		for (int x = 0; x < SCREEN_WIDTH; x++) {
-			double cx = real_axis[x];
+			long double cx = real_axis[x];
 			double it = is_in_set((Complex){cx, cy});
 			row[x] = get_color_for_pixel(it);
 		}
@@ -142,8 +142,8 @@ void zoom_cam(Camera *c, double cx, double cy, double factor) {
 }
 
 void calc_bound(Camera *c, double *real_max, double *real_min, double *imag_max, double *imag_min) {
-	double halfw = c->scale * 0.5;
-	double halfh = c->scale * SCREEN_HEIGHT / SCREEN_WIDTH * 0.5;
+	long double halfw = c->scale * 0.5;
+	long double halfh = c->scale * SCREEN_HEIGHT / SCREEN_WIDTH * 0.5;
 	*real_max = c->cx - halfw;
 	*real_min = c->cx + halfw;
 	*imag_max = c->cy - halfh;
@@ -151,18 +151,18 @@ void calc_bound(Camera *c, double *real_max, double *real_min, double *imag_max,
 }
 
 void change_iter_per_scale(double scale) {
-	double zoom_lvl = log(3.0 / scale) / log(2.0); // halves from intial scale
+	long double zoom_lvl = log(3.0 / scale) / log(2.0); // halves from intial scale
 	int it = 200 + (80.0 * (zoom_lvl > 0.0 ? zoom_lvl : 0.0));
 	if (it > MAX_ITER) it = MAX_ITER;
 }
 
 bool is_inside_bulbs(Complex c) {
 	// check main cardioid
-	double x = c.real - 0.25;
-	double q = x*x + c.imag*c.imag;
+	long double x = c.real - 0.25;
+	long double q = x*x + c.imag*c.imag;
 	if (q * (q + x) < 0.25 * c.imag * c.imag) return true;
 	// period-2 bulb, at (-1; 0); r = 1/4
-	double dx = c.real + 1.0;
+	long double dx = c.real + 1.0;
 	if (dx*dx + c.imag*c.imag < 0.25 * 0.25) return true;
 	return false;
 }
