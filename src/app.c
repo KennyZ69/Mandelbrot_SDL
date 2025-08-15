@@ -7,49 +7,52 @@
 #include <stdio.h>
 
 void draw_mandelbrot(Uint32 *pixels, double real_max, double real_min, double imag_max, double imag_min) {
-	// for (int x = 0; x < SCREEN_WIDTH; x++) {
-	// 	for (int y = 0; y < SCREEN_HEIGHT; y++) {
-	// 		double px = map_point_to_complex(x, 0, SCREEN_WIDTH, real_min, real_max); // getting point on the x axis so the real axis from the gotten pixel x
-	// 		double py = map_point_to_complex(y, 0, SCREEN_HEIGHT, imag_min, imag_max); // getting point on the y axis so the imaginary axis from the gotten pixel y
-	// 		int iter = is_in_set((Complex){px, py}); // getting the iterations for the current complex number, whether it spirales or not and then getting color based on that
-	// 		pixels[y*SCREEN_WIDTH+x] = get_color_for_pixel(iter);
-	// 	}
-	// }
-	
-
-	static long double *real_axis = NULL;
-	static long double *imag_axis = NULL;
-	static int alloc_w = 0, alloc_h = 0;
-
-	if (alloc_w != SCREEN_WIDTH) {
-		free(real_axis);
-		real_axis = (long double*)malloc(SCREEN_WIDTH*sizeof(long double));
-		alloc_w = SCREEN_WIDTH;
-	}
-	if (alloc_h != SCREEN_HEIGHT) {
-		free(imag_axis);
-		imag_axis = (long double*)malloc(SCREEN_HEIGHT*sizeof(long double));
-		alloc_h = SCREEN_HEIGHT;
-	}
-
-	for (int x = 0; x < SCREEN_WIDTH; x++) {
-		real_axis[x] = map_point_to_complex(x, 0, SCREEN_WIDTH, real_max, real_min);
-	}
-	for (int y = 0; y < SCREEN_HEIGHT; y++) {
-		imag_axis[y] = map_point_to_complex(y, 0, SCREEN_HEIGHT, imag_max, imag_min);
-	}
-
-	// parallize rows if compiled with -fopenmp
 	#pragma omp parallel for schedule(dynamic, 4)
-	for (int y = 0; y < SCREEN_HEIGHT; y++) {
-		long double cy = imag_axis[y];
-		Uint32 *row = pixels + (size_t)y * SCREEN_WIDTH;
-		for (int x = 0; x < SCREEN_WIDTH; x++) {
-			long double cx = real_axis[x];
-			double it = is_in_set((Complex){cx, cy});
-			row[x] = get_color_for_pixel(it);
+	for (int x = 0; x < SCREEN_WIDTH; x++) {
+		for (int y = 0; y < SCREEN_HEIGHT; y++) {
+			long double px = map_point_to_complex(x, 0, SCREEN_WIDTH, real_min, real_max); // getting point on the x axis so the real axis from the gotten pixel x
+			long double py = map_point_to_complex(y, 0, SCREEN_HEIGHT, imag_min, imag_max); // getting point on the y axis so the imaginary axis from the gotten pixel y
+			// int iter = is_in_set((Complex){px, py}); // getting the iterations for the current complex number, whether it spirales or not and then getting color based on that
+			int iter = is_in_julia((Complex){px, py}, julia_c);
+			pixels[y*SCREEN_WIDTH+x] = get_color_for_pixel(iter);
 		}
 	}
+	
+
+	// static long double *real_axis = NULL;
+	// static long double *imag_axis = NULL;
+	// static int alloc_w = 0, alloc_h = 0;
+	//
+	// if (alloc_w != SCREEN_WIDTH) {
+	// 	free(real_axis);
+	// 	real_axis = (long double*)malloc(SCREEN_WIDTH*sizeof(long double));
+	// 	alloc_w = SCREEN_WIDTH;
+	// }
+	// if (alloc_h != SCREEN_HEIGHT) {
+	// 	free(imag_axis);
+	// 	imag_axis = (long double*)malloc(SCREEN_HEIGHT*sizeof(long double));
+	// 	alloc_h = SCREEN_HEIGHT;
+	// }
+	//
+	// for (int x = 0; x < SCREEN_WIDTH; x++) {
+	// 	real_axis[x] = map_point_to_complex(x, 0, SCREEN_WIDTH, real_max, real_min);
+	// }
+	// for (int y = 0; y < SCREEN_HEIGHT; y++) {
+	// 	imag_axis[y] = map_point_to_complex(y, 0, SCREEN_HEIGHT, imag_max, imag_min);
+	// }
+	//
+	// // parallize rows if compiled with -fopenmp
+	// #pragma omp parallel for schedule(dynamic, 4)
+	// for (int y = 0; y < SCREEN_HEIGHT; y++) {
+	// 	long double cy = imag_axis[y];
+	// 	Uint32 *row = pixels + (size_t)y * SCREEN_WIDTH;
+	// 	for (int x = 0; x < SCREEN_WIDTH; x++) {
+	// 		long double cx = real_axis[x];
+	// 		// double it = is_in_set((Complex){cx, cy});
+	// 		double it = is_in_julia((Complex){cx, cy}, julia_c);
+	// 		row[x] = get_color_for_pixel(it);
+	// 	}
+	// }
 }
 
 int is_in_set(Complex c) {
@@ -62,6 +65,16 @@ int is_in_set(Complex c) {
 		it++;
 	}
 
+	return it;
+}
+
+int is_in_julia(Complex z, const Complex c) {
+	// probably there is no way to do an early escape check
+	int it = 0;
+	while ((z.real*z.real + z.imag*z.imag) <= 4.0 && it < MAX_ITER) {
+		z = comp_add(comp_mul(z, z), c);
+		it++;
+	} 
 	return it;
 }
 
@@ -144,10 +157,10 @@ void zoom_cam(Camera *c, double cx, double cy, double factor) {
 void calc_bound(Camera *c, double *real_max, double *real_min, double *imag_max, double *imag_min) {
 	long double halfw = c->scale * 0.5;
 	long double halfh = c->scale * SCREEN_HEIGHT / SCREEN_WIDTH * 0.5;
-	*real_max = c->cx - halfw;
-	*real_min = c->cx + halfw;
-	*imag_max = c->cy - halfh;
-	*imag_min = c->cy + halfh;
+	*real_min = c->cx - halfw;
+	*real_max = c->cx + halfw;
+	*imag_min = c->cy - halfh;
+	*imag_max = c->cy + halfh;
 }
 
 void change_iter_per_scale(double scale) {

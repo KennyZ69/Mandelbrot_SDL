@@ -52,3 +52,9 @@ void calc_bound(Camera *c, double *real_max, double *real_min, double *imag_max,
 void zoom_cam(Camera *c, double cx, double cy, double factor);
 
 bool is_inside_bulbs(Complex c);
+
+// static const Complex julia_c = (Complex){-0.7, 0.27015};
+// static const Complex julia_c = (Complex){-0.7269, 0.1889};
+static const Complex julia_c = (Complex){0.285, 0.01};
+
+int is_in_julia(Complex z, const Complex c);

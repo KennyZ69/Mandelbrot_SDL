@@ -56,11 +56,6 @@ int main() {
 					running = false;
 					break;
 				case SDLK_r:
-					// real_min = -2.0, real_max = 1.0;
-					// imag_min = -1.5, imag_max = 1.5;
-					// draw_mandelbrot(pixels, real_max, real_min, imag_max, imag_min);
-					// SDL_UpdateTexture(texture, NULL, pixels, SCREEN_WIDTH * sizeof(Uint32));
-					
 					reset_cam(&cam);
 					calc_bound(&cam, &real_max, &real_min, &imag_max, &imag_min);
 					redraw = true;
@@ -102,10 +97,10 @@ int main() {
 				int mx, my;
 				SDL_GetMouseState(&mx, &my);
 
-				double cx = map_point_to_complex(mx, 0, SCREEN_WIDTH, real_max, real_min);
-				double cy = map_point_to_complex(my, 0, SCREEN_HEIGHT, imag_max, imag_min);
+				double cx = map_point_to_complex(mx, 0, SCREEN_WIDTH, real_min, real_max);
+				double cy = map_point_to_complex(my, 0, SCREEN_HEIGHT, imag_min, imag_max);
 
-				double zfactor = ev.wheel.y > 0 ? ZOOM_IN : ev.wheel.y < 0 ? ZOOM_OUT : 1.0;
+				double zfactor = ev.wheel.y < 0 ? ZOOM_IN : ev.wheel.y > 0 ? ZOOM_OUT : 1.0;
 				if (zfactor != 1.0) {
 					zoom_cam(&cam, cx, cy, zfactor);
 					calc_bound(&cam, &real_max, &real_min, &imag_max, &imag_min);
